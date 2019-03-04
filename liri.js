@@ -3,20 +3,14 @@ require("dotenv").config();
 
 var fs = require("fs");
 var axios = require('axios');
+var moment = require("moment");
 var Spotify = require('node-spotify-api');
 var keys = require("./keys");
 
 var search = process.argv[2];
 var term = process.argv.slice(3).join(" ");
 
-
-
-// commands :
-// concert-this
-// spotify-this-song
-// movie-this
-// do-what-it-says
-
+//----------------Command Prompt----------------
 
 function runLiri(commands, searchTerm){
 
@@ -43,20 +37,13 @@ function runLiri(commands, searchTerm){
     };
 }
 
-// Information displayed: 
-// Artist(s)
-// The song's name
-// A preview link of the song from Spotify
-// The album that the song is from
 
-//If no Song, Default to "The Sign" by Ace of Base.
-
-//Package node-spotify-api 
 
 //----------------Spotify---------------- 
 var spotify = new Spotify(keys.spotify);
 function spotifyThisSong(song) {
-    
+
+    //If no Song, Default to "The Sign" by Ace of Base.
     if (!song) {
         song = "The Sign";
     }
@@ -66,7 +53,7 @@ function spotifyThisSong(song) {
         if (!err) {
             for (var i = 0; i < data.tracks.items.length; i++) {
                 var songData = data.tracks.items[i];
-
+                // Information displayed: Artist(s), The song's name, A preview link of the song from Spotify, The album that the song is from
                 console.log("======================================");
                 var showSong = [
                     "Artist(s): " + songData.artists[0].name,
@@ -89,19 +76,10 @@ function spotifyThisSong(song) {
 //----------------MOVIE----------------
 
 //Command line node liri.js movie-this '<movie name here>'
-// Title of the movie.
-//    * Year the movie came out.
-//    * IMDB Rating of the movie.
-//    * Rotten Tomatoes Rating of the movie.
-//    * Country where the movie was produced.
-//    * Language of the movie.
-//    * Plot of the movie.
-//    * Actors in the movie.
-
 // If the user doesn't type a movie in, the program will output data for the movie 'Mr. Nobody.'
-
 function moviethis(movie){
-
+    params = movie
+    var URL = "http://www.omdbapi.com/?apikey=Trilogy&t=" + movie;
     if(!movie){
         movie = "Mr. Nobody"
       
@@ -113,33 +91,27 @@ function moviethis(movie){
         console.log("======================================");
     }
 
-    params = movie 
+    axios.get(URL).then(function(response){
+     
+        var resData = response.data;
 
-    request ("http://www.omdbapi.com/?t=" + params + "&y=&plot=short&r=json&tomatoes=true&apikey=trilogy", function(error, response, body){
-        if (!error && response.statusCode == 200){
-
-            var movies = JSON.parse(body);
-
-            console.log("======================================");
-
-            console.log("Title: " + movies.Title);
-            console.log("Release Year: " + movies.Year);
-            console.log("IMDB Rating: " + movies.imdbRating);
-            console.log("Rotten Tomatoes Rating: " + movies.tomatoRating);
-            console.log("Country: " + movies.Country);
-            console.log("Language: " + movies.Language);
-            console.log("Plot: " + movies.Plot);
-            console.log("Actors: " + movies.Actors);
-
-            console.log("======================================");
-        } 
-        else {
-            console.log("Error :" + error);
-            return;
-        }
-    });
-};
-
+        console.log("======================================");
+        var showMovie = [
+            "\nTitle: " + resData.Title,
+            "Release Year: " + resData.Year,
+            "IMDB Rating: " + resData.Ratings[0].Value,
+            "Rotten Tomatoes Rating: " + resData.Ratings[1].Value,
+            "Country: " + resData.Country,
+            "Language: " + resData.Language,
+            "Plot: " + resData.Plot,
+            "Cast: " + resData.Actors,
+        ].join("\n\n");
+        console.log(showMovie);
+        console.log("======================================");
+        
+        
+    })
+}
 //----------------Concert----------------
 
 // node liri.js concert-this <artist/band name here>
@@ -149,6 +121,25 @@ function moviethis(movie){
 // Name of the venue
 // Venue location
 // Date of the Event (use moment to format this as "MM/DD/YYYY")
+
+function concertThis(artist){
+    param = artist
+    var URL = "https://rest.bandsintown.com/artists/" + artist + "/events?app_id=codingbootcamp"
+
+    axios.get(URL).then(function(response){
+        var resData = response.data;
+    
+        var showConcert = [
+            "\nName of the venue: " + resData[0].venue.name,
+            "Location: " + resData[0].venue.city,
+            "Date: " + moment(resData[0].datetime).format('L')
+
+        ].join("\n\n");
+        
+        console.log(showConcert);
+        
+    })
+}
 
 //----------------Do What It Says----------------
 
